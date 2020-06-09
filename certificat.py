@@ -1,4 +1,8 @@
+from Crypto.Publickey import RSA
+
 # Générer une clé privée RSA
+key = RSA.generate(1024) # taille de la clé en bits
+
 # Générer une CSR (demande de signature)
 # Supprimer la phrase secrète de la clé
 # Générer un certificat auto-signé
