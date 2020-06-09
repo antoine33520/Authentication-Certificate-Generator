@@ -17,7 +17,7 @@ def instanceServeur (client, infosClient):
 		message = client.recv(255).decode("utf-8")
 		print("Message reçu du client " + adresseIP + ":" + port + " : " + message)
 		client.send("Message reçu".encode("utf-8"))
-	print("Connexion fermée avec " + name)
+	print("Connexion fermée avec " + adresseIP + ":" + port)
 	client.close()
 
 serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
