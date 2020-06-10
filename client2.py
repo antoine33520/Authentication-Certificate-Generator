@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 import socket
+from getmac import get_mac_address as gma
 
 host = "127.0.0.1"	# Ici, le poste local
 port = 8080	# Se connecter sur le port 8080
 name = 'Client 2'
+mac_address = gma()
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((host, port))
-print("Connecté au serveur")
+print(name + " connecté au serveur")
 
 print("Tapez FIN pour terminer la conversation. ")
 message = ""
