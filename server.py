@@ -33,4 +33,5 @@ serveur.close()
 #################################
 ######### RESTE A FAIRE #########
 #################################
+# autoriser l'acces seulement au MAC connues
 # donner les droits à chaque client
