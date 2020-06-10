@@ -29,3 +29,8 @@ while True:
 	threadsClients[-1].start()
 
 serveur.close()
+
+#################################
+######### RESTE A FAIRE #########
+#################################
+# donner les droits à chaque client
