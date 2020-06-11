@@ -5,9 +5,9 @@ from getmac import get_mac_address as gma
 
 host = "127.0.0.1"
 port = 8080
-name = 'User'
+name = 'Intru'
 # Récupération de l'adresse MAC du client
-mac_address = str(gma())
+mac_address = '18:31:bf:12:94:2e'
 
 # Création du socket
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

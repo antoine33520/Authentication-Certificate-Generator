@@ -3,6 +3,7 @@ import socket
 import threading
 from getmac import get_mac_address as gma
 
+
 port = 8080
 host = '127.0.0.1'
 
@@ -12,7 +13,6 @@ def instanceServeur (client, infosClient):
 	adresseIP = infosClient[0]
 	port = str(infosClient[1])
 	print("Instance de serveur prêt pour " + adresseIP + ":" + port)
-
 	message = client.recv(255).decode("utf-8")
 	print("Message reçu du client " + adresseIP + ":" + port + " : " + message)
 	client.send("Server : Message reçu".encode("utf-8"))

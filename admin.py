@@ -17,8 +17,8 @@ print(name + " connecté au serveur")
 
 message = mac_address
 # Envoi du message vers le serveur
-client.send(message.encode("utf-8"))
-print('Client 1 : ' + message)
+client.sendall(message.encode("utf-8"))
+print(name + " : " + message)
 # Réception de la réponse du serveur
 reponse = client.recv(255)
 print(reponse.decode("utf-8"))
