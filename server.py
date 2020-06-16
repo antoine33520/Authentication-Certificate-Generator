@@ -12,10 +12,10 @@ def instanceServeur (client, infosClient):
 	port = str(infosClient[1])
 	print("Instance de serveur prêt pour " + adresseIP + ":" + port)
 	# réception de la mac du client
-	mac_address = client.recv(255).decode("utf-8")
-	print("Message reçu du client : " + mac_address)
-	if mac_address == '18:31:bf:12:94:2d':
-		print("Connexion acceptée avec l'Admin !")
+	message = client.recv(255).decode("utf-8")
+	print("Message reçu du client : " + message)
+	if message == 'MAC:18:31:bf:12:94:2d/UUID:329f9f67-5269-fc47-8734-b8aae8d8e83e':
+		print("Connexion acceptée avec l'Admin !\nVous avez le droit à 10s de connexion.")
 		reponse = 'Connexion acceptée !'
 		client.sendall(reponse.encode('utf-8'))
 		# Délai de connexion au server, ici 10 secondes

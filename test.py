@@ -1,3 +1,27 @@
+import timeit
+
+t = timeit.timeit()
+print(t)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
 #!/usr/bin/env python3
 import socket, threading
 from getmac import get_mac_address as gma
@@ -31,3 +55,4 @@ else :
 	print("Connexion refusée avec l'Intru !")
 
 serveur.close()
+"""

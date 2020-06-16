@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import socket, time
+import socket, time, os, sys
 from getmac import get_mac_address as gma
 
 
@@ -21,22 +21,9 @@ name = 'User'
 # Récupération de l'adresse MAC du client
 mac_address = str(gma())
 uuid = get_motherboard_uuid()
+message = mac_address + "/" + uuid
 
 # Création du socket
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # Connexion du socket au serveur
 client.connect((host, port))
-print(name + " connecté au serveur")
-
-message = mac_address
-# Envoi du message vers le serveur
-client.send(message.encode("utf-8"))
-print(name + " : " + message)
-# Réception de la réponse du serveur
-reponse = client.recv(255)
-print(reponse.decode("utf-8"))
-# Délai de connexion au server, ici 10 secondes
-time.sleep(10)
-# Fermeture de la connexion au serveur
-print("Connexion fermée")
-client.close()

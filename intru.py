@@ -2,6 +2,7 @@
 import socket, time, os, sys
 from getmac import get_mac_address as gma
 
+
 # fonction pour obtenir l'uuid de la carte mère 
 def get_motherboard_uuid():
 	os_type = sys.platform.lower()
