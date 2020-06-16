@@ -22,7 +22,7 @@ serveur.bind((host, port))
 print("Serveur prêt, en attente de requêtes ...")
 serveur.listen(5) # max 5 connexions acceptées en parallèles
 # réception de la mac du client
-mac_address = client.recv(255).decode("utf-8")
+mac_address = serveur.recv(255).decode("utf-8")
 print("Message reçu du client : " + mac_address)
 if mac_address == '18:31:bf:12:94:2d':
 	print("Connexion acceptée avec l'Admin !")
@@ -33,6 +33,9 @@ else :
 	print("Connexion refusée avec l'Intru !")
 
 serveur.close()
+
+def drotis():
+	pass
 
 #################################
 ######### RESTE A FAIRE #########
