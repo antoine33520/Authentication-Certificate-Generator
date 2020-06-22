@@ -21,7 +21,7 @@ def instanceServeur (client, infosClient):
 		# Délai de connexion au server, ici 10 secondes
 		time.sleep(10)
 		# Fermeture de la connexion au serveur
-		print("Connexion fermée")
+		print("Connexion fermée !")
 		client.close()
 	else :
 		print("Connexion refusée avec l'Intru !")
@@ -47,5 +47,4 @@ serveur.close()
 #################################
 ######### RESTE A FAIRE #########
 #################################
-# autoriser l'acces seulement aux MAC connues
 # donner les droits à chaque client

@@ -40,10 +40,12 @@ if reponse == 'Connexion acceptée !':
 	while True:
 		message = input(">")
 		client.send(message.encode("utf-8"))
-		reponse = client.recv(255).decode("utf-8")
 else:
 	print(name + " n'est pas autorisé à se connecter au serveur.")
 	client.close()
+
+
+
 
 ################################
 ######## RESTE A FAIRE #########
