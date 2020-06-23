@@ -15,6 +15,10 @@ def generate_key():
     file.write(key.export_key('PEM'))
     file.close()
 
+def recup_pubkey():
+    pubkey = key.publickey().exportKey('PEM')
+    print(pubkey)
+
 def hachage_func():
     # Fonction de hachage
     hash_message = hashlib.sha1(message)
