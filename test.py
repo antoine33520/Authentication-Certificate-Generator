@@ -1,4 +1,4 @@
-import hashlib
-hash_object = hashlib.sha1(b'Hello World')
-hex_dig = hash_object.hexdigest()
-print(hash_object)
+#!/usr/bin/env python3
+import os, sys, hashlib
+from datetime import datetime, timedelta
+

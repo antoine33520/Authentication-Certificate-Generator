@@ -27,3 +27,9 @@ def signature():
 def verif():
     global verif, signature, pubkey
     verif = osy.verifier(message, pubkey, signature)
+
+generate_key()
+chiffrement()
+dechiffrement()
+signature()
+verif()
