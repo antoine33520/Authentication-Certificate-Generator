@@ -37,14 +37,14 @@ def get_serial_nb():
 
 
 def generate_key():
-    global key, pubkey
+    global keys, pubkey
     # Générer paire de clés RSA
-    key = RSA.generate(2048) # Taille de la clé en bits
+    keys = RSA.generate(2048) # Taille de la clé en bits
     # Enregistrer la clé dans un fichier
     file = open('mykey.pem', 'wb')
-    file.write(key.export_key('PEM'))
+    file.write(keys.export_key('PEM'))
     file.close()
-    pubkey = key.publickey().exportKey('PEM')
+    pubkey = keys.publickey().exportKey('PEM')
     return pubkey
 
 
@@ -63,37 +63,50 @@ def duration():
     date_debut = datetime.now()
     date_debut = str(date_debut.day) + '-' + str(date_debut.month) + '-' + str(date_debut.year)
     # date de fin de validité du certificat
-    date_fin = datetime.now() + timedelta(days=10)
+    duration = int(input('Quelle est la durée du certificat ? \nVeuillez entrer un nombre de jours :\n'))
+    date_fin = datetime.now() + timedelta(days=duration)
     date_fin = str(date_fin.day) + '-' + str(date_fin.month) + '-' + str(date_fin.year)
     duree = 'Du ' + date_debut + ' au ' + date_fin
     return(duree)
 
-certif_serial_nb = 0
+def gen_certif_serial_nb():
+    # Ouvrir le fichier en mode lecture et ajout
+    serial_nb_file = open('certif_serial_nb.txt', 'r')
+    # Récupérer la dernière ligne
+    last_line = len(serial_nb_file.readlines()) - 1
+    # Fermer le fichier
+    serial_nb_file.close()
+    # Créer nouveau numéro de série
+    certif_serial_nb = int(last_line) + 1
+    # Ouvrir le fichier en mode lecture et ajout
+    serial_nb_file = open('certif_serial_nb.txt', 'a')
+    # Ajouter nouveau numéro de série au fichier
+    serial_nb_file.write('\n' + str(certif_serial_nb))
+    # Fermer le fichier
+    serial_nb_file.close()
+    return certif_serial_nb
+
 # Structure d'un certificat :
-def generate_certificate():
-    global certif_serial_nb
+def gen_certificate():
     # numéro de série du certificat
-    for generate_certificate() == True:
-        certif_serial_nb += 1
-        print(certif_serial_nb)
+    certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
     # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
-    print(gen_serial_nb)
     # algorithme de chiffrement utilisé pour signer le certificat
-    print('Hash:SHA256')
+    hashage = 'Hash:SHA256'
     # durée
-    print(duration())
+    duree = duration()
     # clé publique du propriétaire du certificat
     pubkey = 'PublicKey:' + str(generate_key())
-    print(pubkey)
     # identifiants pc
-    print(get_motherboard_uuid())
-    print(get_mac())
-    print(get_serial_nb())
+    uuid = get_motherboard_uuid()
+    mac = get_mac()
+    serial_nb = get_serial_nb()
+    text = certif_serial_nb + '\n' + gen_serial_nb + '\n' + hashage + '\n' + duree + '\n' + pubkey + '\n' + uuid + '\n' + mac + '\n' + serial_nb
+    return text
 
 
-
-generate_certificate()
+print(gen_certificate())
 
 # mettre en binaire et identifier la cle de hash et publique
 # uint16 (4 caracteres)
