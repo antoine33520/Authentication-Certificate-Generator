@@ -2,6 +2,7 @@
 import os, sys, hashlib
 from getmac import get_mac_address as gma
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 from datetime import datetime, timedelta
 from getmac import get_mac_address as gma
 
@@ -15,7 +16,7 @@ Cette fonction retourne l'uuid de la carte mère.
 Elle exécute une commande en focntion de l'os utilisé (windows, linux, macos).
 """
 def get_motherboard_uuid():
-    global result1
+    global motherboard_uuid
     os_type = sys.platform.lower()
     if "win" in os_type:
         commande = "wmic csproduct get name,identifyingnumber,uuid"
@@ -23,8 +24,8 @@ def get_motherboard_uuid():
         commande = "dmidecode | grep -i uuid"
     elif "darwin" in os_type:
         commande = "dmidecode --string system-uuid"
-    result1 = os.popen(commande).read().replace("\n","").replace("	","").replace(" ","")
-    return result1
+    motherboard_uuid = os.popen(commande).read().replace("\n","").replace("	","").replace(" ","")
+    return motherboard_uuid
 """
 Cette fonction retourne l'adresse mac de la carte réseau utilisée.
 """
@@ -37,7 +38,7 @@ Cette fonction retourne le numéro de série de l'ordinateur, se trouvant sur le
 Elle exécute une commande en fonction de l'os utlisée (windows, linux, macos).
 """
 def get_serial_nb():
-    global result2
+    global serial_nb
     os_type = sys.platform.lower()
     if "win" in os_type:
         commande = "wmic bios get serialnumber"
@@ -45,8 +46,8 @@ def get_serial_nb():
         commande = "dmidecode -t system | grep Serial"
     elif "darwin" in os_type:
         commande = "ioreg -l | grep IOPlatformeSerialNumber"
-    result2 = os.popen(commande).read().replace("\n","").replace("	","").replace(" ","")
-    return result2
+    serial_nb = os.popen(commande).read().replace("\n","").replace("	","").replace(" ","")
+    return serial_nb
 
 
 ############################################################################################
@@ -74,19 +75,23 @@ Cette fonction récupère la clé publique et encrypte les données du certifica
 Elle retourne les données encryptées.
 """
 def encrypt(data):
-    pubkey = keys.publickey()
-    encrypt_data = pubkey.encrypt(data, 32)
+    global encrypt_data
+    cipher = PKCS1_OAEP.new(keys)
+    encrypt_data = cipher.encrypt(data)
     return encrypt_data
 """
 Cette fonction hash les données du certificat et les retourne.
 Elle utilise la fonction de hachage SHA256.
 """
 def hash_func(data):
-    global hex_dig
+    global hash_message
+    # Encodage avant hachage
+    data = data.encode('utf-8')
     # Fonction de hachage
     hash_message = hashlib.sha256(data)
-    hex_dig = hash_message.hexdigest()
-    return hex_dig
+    # Passage en hexadecimal
+    hash_message = hash_message.hexdigest()
+    return hash_message
 
 
 ############################################################################################
@@ -105,7 +110,7 @@ def duration():
     date_debut = datetime.now()
     date_debut = str(date_debut.day) + '-' + str(date_debut.month) + '-' + str(date_debut.year)
     # date de fin de validité du certificat
-    duration = int(input('Quelle est la durée du certificat ? \nVeuillez entrer un nombre de jours :\n'))
+    duration = int(input('Quelle est la durée du certificat ? \nVeuillez entrer un nombre de jours : '))
     date_fin = datetime.now() + timedelta(days=duration)
     date_fin = str(date_fin.day) + '-' + str(date_fin.month) + '-' + str(date_fin.year)
     duree = 'Du ' + date_debut + ' au ' + date_fin
@@ -139,33 +144,37 @@ Elle réuni toutes les fonctions précédentes pour afficher les informations qu
 def gen_certificate():
     # numéro de série du certificat
     certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
+    certif_serial_nb = hash_func(certif_serial_nb)
     # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
+    gen_serial_nb = hash_func(gen_serial_nb)
     # algorithme de chiffrement utilisé pour signer le certificat
     hashage = 'Hash:SHA256'
+    hashage = hash_func(hashage)
     # durée
     duree = duration()
+    duree = hash_func(duree)
     # clé publique du propriétaire du certificat
     pubkey = 'PublicKey:' + str(generate_keys())
+    pubkey = hash_func(pubkey)
     # identifiants pc
     uuid = get_motherboard_uuid()
+    uuid = hash_func(uuid)
     mac = get_mac()
+    mac = hash_func(mac)
     serial_nb = get_serial_nb()
+    serial_nb = hash_func(serial_nb)
     text = certif_serial_nb + '\n' + gen_serial_nb + '\n' + hashage + '\n' + duree + '\n' + pubkey + '\n' + uuid + '\n' + mac + '\n' + serial_nb
     return text
 
-
+certificat = encrypt(gen_certificate())
+print('Voici votre certificat :\n' + certificat)
 ############################################################################################
 ############################################################################################
 ####################            CERTIFICAT HASHÉ ET CRYPTÉ           #######################
 ############################################################################################
 ############################################################################################
-def gen_certificate_encryt():
-    data = hash_func(gen_certificate())
-    encrypt(data)
 
-
-print()
 
 # signature avant chiffrement = + sécurisé !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # chiffrer avec la clé de hash
