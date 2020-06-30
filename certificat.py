@@ -5,7 +5,15 @@ from Crypto.PublicKey import RSA
 from datetime import datetime, timedelta
 from getmac import get_mac_address as gma
 
-
+############################################################################################
+############################################################################################
+####################                 IDENTIFIANTS DU PC              #######################
+############################################################################################
+############################################################################################
+"""
+Cette fonction retourne l'uuid de la carte mère.
+Elle exécute une commande en focntion de l'os utilisé (windows, linux, macos).
+"""
 def get_motherboard_uuid():
     global result1
     os_type = sys.platform.lower()
@@ -17,12 +25,17 @@ def get_motherboard_uuid():
         commande = "dmidecode --string system-uuid"
     result1 = os.popen(commande).read().replace("\n","").replace("	","").replace(" ","")
     return result1
-
+"""
+Cette fonction retourne l'adresse mac de la carte réseau utilisée.
+"""
 def get_mac():
     global mac_address
     mac_address = str("MAC:" + gma())
     return mac_address
-
+"""
+Cette fonction retourne le numéro de série de l'ordinateur, se trouvant sur le bios.
+Elle exécute une commande en fonction de l'os utlisée (windows, linux, macos).
+"""
 def get_serial_nb():
     global result2
     os_type = sys.platform.lower()
@@ -36,7 +49,17 @@ def get_serial_nb():
     return result2
 
 
-def generate_key():
+############################################################################################
+############################################################################################
+####################          SIGNATURE, HACHAGE, ENCRYPTION         #######################
+############################################################################################
+############################################################################################
+"""
+Cette fonction génère une paire de clés rsa.
+Elle les enregistre dans un fichier appelé 'mykey.pem'.
+Puis elle exporte la clé publique et la retourne.
+"""
+def generate_keys():
     global keys, pubkey
     # Générer paire de clés RSA
     keys = RSA.generate(2048) # Taille de la clé en bits
@@ -46,17 +69,36 @@ def generate_key():
     file.close()
     pubkey = keys.publickey().exportKey('PEM')
     return pubkey
-
-
-# Message à crypter
-message = 'certificat'
-def hash_func():
+"""
+Cette fonction récupère la clé publique et encrypte les données du certificat.
+Elle retourne les données encryptées.
+"""
+def encrypt(data):
+    pubkey = keys.publickey()
+    encrypt_data = pubkey.encrypt(data, 32)
+    return encrypt_data
+"""
+Cette fonction hash les données du certificat et les retourne.
+Elle utilise la fonction de hachage SHA256.
+"""
+def hash_func(data):
     global hex_dig
     # Fonction de hachage
-    hash_message = hashlib.sha256(message)
+    hash_message = hashlib.sha256(data)
     hex_dig = hash_message.hexdigest()
-    print(hex_dig)
+    return hex_dig
 
+
+############################################################################################
+############################################################################################
+####################                 CONTENU CERTIFICAT              #######################
+############################################################################################
+############################################################################################
+"""
+Cette fonction détermine la durée du certificat.
+Elle prend la date de création du certificat.
+Elle demande à l'utilisateur de choisir sa durée en jours à sa génération.
+"""
 # dates de début et de fin de validité
 def duration():
     # date de création du certificat et début de validité
@@ -68,9 +110,13 @@ def duration():
     date_fin = str(date_fin.day) + '-' + str(date_fin.month) + '-' + str(date_fin.year)
     duree = 'Du ' + date_debut + ' au ' + date_fin
     return(duree)
-
+"""
+Cette fonction génère le numéro de série du certificat.
+Elle stocke tous les numéros de série dans l'ordre dans le fichier 'certif_serial_nb.txt'.
+Elle y récupère le dernier numéro utilisé pour y ajouter 1 et l'enregistrer à la fin du fichier.
+"""
 def gen_certif_serial_nb():
-    # Ouvrir le fichier en mode lecture et ajout
+    # Ouvrir le fichier en mode lecture
     serial_nb_file = open('certif_serial_nb.txt', 'r')
     # Récupérer la dernière ligne
     last_line = len(serial_nb_file.readlines()) - 1
@@ -78,14 +124,17 @@ def gen_certif_serial_nb():
     serial_nb_file.close()
     # Créer nouveau numéro de série
     certif_serial_nb = int(last_line) + 1
-    # Ouvrir le fichier en mode lecture et ajout
+    # Ouvrir le fichier en mode ajout
     serial_nb_file = open('certif_serial_nb.txt', 'a')
     # Ajouter nouveau numéro de série au fichier
     serial_nb_file.write('\n' + str(certif_serial_nb))
     # Fermer le fichier
     serial_nb_file.close()
     return certif_serial_nb
-
+"""
+Cette fonction représentant la structure du certificat.
+Elle réuni toutes les fonctions précédentes pour afficher les informations qui se trouvent sur notre certificat.
+"""
 # Structure d'un certificat :
 def gen_certificate():
     # numéro de série du certificat
@@ -97,7 +146,7 @@ def gen_certificate():
     # durée
     duree = duration()
     # clé publique du propriétaire du certificat
-    pubkey = 'PublicKey:' + str(generate_key())
+    pubkey = 'PublicKey:' + str(generate_keys())
     # identifiants pc
     uuid = get_motherboard_uuid()
     mac = get_mac()
@@ -106,8 +155,19 @@ def gen_certificate():
     return text
 
 
-print(gen_certificate())
+############################################################################################
+############################################################################################
+####################            CERTIFICAT HASHÉ ET CRYPTÉ           #######################
+############################################################################################
+############################################################################################
+def gen_certificate_encryt():
+    data = hash_func(gen_certificate())
+    encrypt(data)
 
-# mettre en binaire et identifier la cle de hash et publique
-# uint16 (4 caracteres)
+
+print()
+
 # signature avant chiffrement = + sécurisé !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# chiffrer avec la clé de hash
+# puis chiffrer avec la clé publique
+# mettre en binaire et identifier la cle de hash et publique
