@@ -68,7 +68,6 @@ Type "help", "copyright", "credits" or "license" for more information.
 [user]~ pip -V
 pip 20.0.2 from /usr/lib/python3.8/site-packages/pip (python 3.8)
 ```
-### Installation
 ### Utilisation
 Pour générer un certificat, vous devez ouvrir un terminal et taper la commande suivante:
 ```bash
