@@ -65,7 +65,7 @@ def generate_keys():
     # Générer paire de clés RSA
     keys = RSA.generate(2048) # Taille de la clé en bits
     # Enregistrer la clé dans un fichier
-    file = open('mykey.pem', 'wb')
+    file = open('./private/mykey.pem', 'wb')
     file.write(keys.export_key('PEM'))
     file.close()
     pubkey = keys.publickey().exportKey('PEM')
@@ -75,7 +75,8 @@ Cette fonction récupère la clé publique et encrypte les données du certifica
 Elle retourne les données encryptées.
 """
 def encrypt(data):
-    global encrypt_data
+    global encrypt_data, keys
+    keys = generate_keys()
     cipher = PKCS1_OAEP.new(keys)
     encrypt_data = cipher.encrypt(data)
     return encrypt_data
@@ -122,7 +123,7 @@ Elle y récupère le dernier numéro utilisé pour y ajouter 1 et l'enregistrer 
 """
 def gen_certif_serial_nb():
     # Ouvrir le fichier en mode lecture
-    serial_nb_file = open('certif_serial_nb.txt', 'r')
+    serial_nb_file = open('./private/certif_serialnb.txt', 'r')
     # Récupérer la dernière ligne
     last_line = len(serial_nb_file.readlines()) - 1
     # Fermer le fichier
@@ -130,7 +131,7 @@ def gen_certif_serial_nb():
     # Créer nouveau numéro de série
     certif_serial_nb = int(last_line) + 1
     # Ouvrir le fichier en mode ajout
-    serial_nb_file = open('certif_serial_nb.txt', 'a')
+    serial_nb_file = open('./private/certif_serialnb.txt', 'a')
     # Ajouter nouveau numéro de série au fichier
     serial_nb_file.write('\n' + str(certif_serial_nb))
     # Fermer le fichier
@@ -145,17 +146,18 @@ def gen_certificate():
     # numéro de série du certificat
     certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
     certif_serial_nb = hash_func(certif_serial_nb)
+    certif_serial_nb = encrypt(certif_serial_nb)
     # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
     gen_serial_nb = hash_func(gen_serial_nb)
     # algorithme de chiffrement utilisé pour signer le certificat
-    hashage = 'Hash:SHA256'
+    hashage = 'SHA256'
     hashage = hash_func(hashage)
     # durée
     duree = duration()
     duree = hash_func(duree)
     # clé publique du propriétaire du certificat
-    pubkey = 'PublicKey:' + str(generate_keys())
+    pubkey = str(generate_keys())
     pubkey = hash_func(pubkey)
     # identifiants pc
     uuid = get_motherboard_uuid()
@@ -167,7 +169,7 @@ def gen_certificate():
     text = certif_serial_nb + '\n' + gen_serial_nb + '\n' + hashage + '\n' + duree + '\n' + pubkey + '\n' + uuid + '\n' + mac + '\n' + serial_nb
     return text
 
-certificat = encrypt(gen_certificate())
+certificat = gen_certificate()
 print('Voici votre certificat :\n' + certificat)
 ############################################################################################
 ############################################################################################
@@ -177,6 +179,6 @@ print('Voici votre certificat :\n' + certificat)
 
 
 # signature avant chiffrement = + sécurisé !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# chiffrer avec la clé de hash
-# puis chiffrer avec la clé publique
+# chiffrer avec la clé de hash OK!
+# puis chiffrer avec la clé publique ENCOURS!
 # mettre en binaire et identifier la cle de hash et publique
