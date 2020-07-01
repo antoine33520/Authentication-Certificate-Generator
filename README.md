@@ -39,6 +39,7 @@ Afin d'utiliser le programme, il faut installer ou mettre à jour ... :
 #### 1. Installation de `python 3` et `pip` :
 * Pour Windows :  
 Pour installer `python3`, veuillez télécharger le programme d'installation exécutable sur le [site officiel](https://www.python.org/downloads/) puis exécuter le programme, cocher les deux cases et installer.  
+![install](python-setup.png)
 >`pip` est normalement installée en même temps
 
 * Pour Linux :  
