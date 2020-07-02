@@ -2,7 +2,7 @@
 ## I. Présentation du projet
 
 ## II. Technologies utilisées, Architecture & Fonctionnalités
-Le travail effectué m'était demandé dans le langage `Python` (version 3.6). J'ai donc utilisé les librairies `getmac`, `pycrypto`, `datetime` et `hashlib`.  
+Le travail effectué m'était demandé dans le langage `Python` (version 3.8). J'ai donc utilisé les librairies `getmac`, `pycrypto`, `datetime` et `hashlib`.  
 Les fichiers se trouvant dans le dossier `private` sont protégés par un mot de passe.
 ```
 projet/
@@ -30,12 +30,13 @@ La clé privée est stockée dans le fichier `mykey.pem`.
 ## IV. Pré-requis & Utilisation
 ### Pré-requis :
 Afin d'utiliser le programme, il faut installer ou mettre à jour ... :
-* python 3.6
+* python3
 * pip
 * getmac
 * pycrypto
 * datetime
 * hashlib
+* getpass
 #### 1. Installation de `python 3` et `pip` :
 * Pour Windows :  
 Pour installer `python3`, veuillez télécharger le programme d'installation exécutable sur le [site officiel](https://www.python.org/downloads/) puis exécuter le programme, cocher les deux cases et installer.  
@@ -78,5 +79,5 @@ Pour générer un certificat, vous devez ouvrir un terminal et taper la commande
 * Trouver 3 identifiants d'ordinateur uniques et qui sont le moins susceptibles d'être changés
 * Fonction de hashage : problème d'encodage des données résolu en encodant les donnée en `utf-8`
 * Fonction d'encryptage : problème de longueur de données à crypter (trop grande)
-
+* Trouver un moyen de verrouiller un fichier et un dossier
 ## VI. Améliorations suggérées
