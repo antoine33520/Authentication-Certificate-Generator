@@ -77,7 +77,7 @@ Pour générer un certificat, vous devez ouvrir un terminal et taper la commande
 ```
 ## V. Problèmes rencontrés
 * Trouver 3 identifiants d'ordinateur uniques et qui sont le moins susceptibles d'être changés
-* Fonction de hashage : problème d'encodage des données résolu en encodant les donnée en `utf-8`
+* Fonction de hashage : problème d'encodage des données résolu en encodant les données en `ascii`
 * Fonction d'encryptage : problème de longueur de données à crypter (trop grande)
 * Trouver un moyen de verrouiller un fichier et un dossier
 ## VI. Améliorations suggérées
