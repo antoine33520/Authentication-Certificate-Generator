@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, hashlib, getpass, binascii
+
+from Crypto.Hash import SHA256
 from getmac import get_mac_address as gma
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
@@ -76,19 +78,19 @@ def generate_keys():
     privkey = privkey.exportKey('PEM')
 # Enregistrer les clés dans 2 fichiers
     # pour la clé publique
-    with open('public.pem', 'wb') as file_pubkey:
+    with open('./private/public.pem', 'wb') as file_pubkey:
         file_pubkey.write(pubkey)
         file_pubkey.close()
     # pour la clé privée
-    with open('private.pem', 'wb') as file_privkey:
+    with open('./private/private.pem', 'wb') as file_privkey:
         file_privkey.write(privkey)
         file_privkey.close()
 # Décoder les clés
-    pubkey = pubkey.decode('ascii')
-    privkey = privkey.decode('ascii')
+    #pubkey = pubkey.decode('ascii')
+    #privkey = privkey.decode('ascii')
 # Vérouiller l'accès aux fichiers
     lock()
-    return pubkey
+    return pubkey, privkey
 """
 Cette fonction hash les données du certificat et les retourne.
 Elle utilise la fonction de hachage SHA256.
@@ -98,7 +100,7 @@ def hash_func(data):
 # Encodage avant hachage
     data = data.encode('ascii')
 # Fonction de hachage
-    hash_message = hashlib.sha256(data)
+    hash_message = SHA256.new(data)
 # Passage en hexadecimal
     hash_message = hash_message.hexdigest()
     return hash_message
@@ -107,9 +109,14 @@ Cette fonction récupère la clé publique et encrypte les données du certifica
 Elle retourne les données encryptées.
 """
 def encrypt_func(data):
-    global encrypt_data, privkey
-    encryptor = PKCS1_OAEP.new(privkey)
-    encrypt_data = encryptor.encrypt(data)
+    unlock()
+    with open('./private/private.pem', 'r') as priv_key_file:
+        privkey_list = priv_key_file.readlines()
+        key = "".join(privkey_list)
+        privkey = RSA.import_key(key)
+    encryptor = PKCS1_OAEP.new(privkey, SHA256)
+    encrypt_data = encryptor.encrypt(data.encode('ascii'))
+    lock()
     return encrypt_data
 
 
@@ -160,18 +167,19 @@ def gen_certif_serial_nb():
     lock()
     return certif_serial_nb
 """
-Cette fonction représentant la structure du certificat en clair, haché puis crypté.
+Cette fonction représentant la structure du certificat en clair, haché puis chiffré.
 Elle réuni toutes les fonctions précédentes pour afficher les informations qui se trouvent sur notre certificat.
 """
 def gen_certificate():
 # Vérouiller les fichiers supplémentaires
     lock()
 # Récupérer la clé publique
-    pubkey = generate_keys()
+#     pubkey = generate_keys()
 # numéro de série du certificat
     certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
     certif_serial_nb = hash_func(certif_serial_nb)
     certif_serial_nb = encrypt_func(certif_serial_nb)
+    print(certif_serial_nb)
 # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
     gen_serial_nb = hash_func(gen_serial_nb)
@@ -194,7 +202,16 @@ def gen_certificate():
 # clé publique du propriétaire du certificat
     pubkey = str(generate_keys())
     pubkey = hash_func(pubkey)
-    hashtext = certif_serial_nb + '\n' + gen_serial_nb + '\n' + hachage + '\n' + duree + '\n' + pubkey + '\n' + uuid + '\n' + mac + '\n' + serial_nb
+    hashtext = f"""
+    {str(certif_serial_nb)}
+    {str(gen_serial_nb)}
+    {str(hachage)}
+    {str(duree)}
+    {str(pubkey)}
+    {str(uuid)}
+    {str(mac)}
+    {str(serial_nb)}
+    """
     return hashtext
 
 
