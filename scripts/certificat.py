@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import os, sys, hashlib, getpass
+import os, sys, hashlib, getpass, binascii
 from getmac import get_mac_address as gma
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 from datetime import datetime, timedelta
-from getmac import get_mac_address as gma
+
 
 ######################################################################################################################################################
 ######################################################################################################################################################
@@ -69,18 +70,22 @@ def generate_keys():
     unlock()
 # Générer une paire de clés RSA
     keys = RSA.generate(2048) # Taille de la clé en bits
+    privkey, pubkey = keys, keys.publickey()
 # Exporter les clés
-    pubkey = keys.publickey().exportKey('PEM')
-    privkey = keys.exportKey('PEM')
+    pubkey = pubkey.exportKey('PEM')
+    privkey = privkey.exportKey('PEM')
 # Enregistrer les clés dans 2 fichiers
     # pour la clé publique
-    with open('public.pem', 'w') as file_pubkey:
-        file_pubkey.write(pubkey.decode())
+    with open('public.pem', 'wb') as file_pubkey:
+        file_pubkey.write(pubkey)
         file_pubkey.close()
     # pour la clé privée
-    with open('private.pem', 'w') as file_privkey:
-        file_privkey.write(privkey.decode())
+    with open('private.pem', 'wb') as file_privkey:
+        file_privkey.write(privkey)
         file_privkey.close()
+# Décoder les clés
+    pubkey = pubkey.decode('ascii')
+    privkey = privkey.decode('ascii')
 # Vérouiller l'accès aux fichiers
     lock()
     return pubkey
@@ -101,19 +106,10 @@ def hash_func(data):
 Cette fonction récupère la clé publique et encrypte les données du certificat.
 Elle retourne les données encryptées.
 """
-def encrypt(data):
+def encrypt_func(data):
     global encrypt_data, privkey
-# Récupérer la clé privée
-    unlock()
-    with open('./private/private.pem', 'r') as file_privkey:
-        priv_key = file_privkey.read()
-        file_privkey.close()
-    privkey = RSA.importKey(priv_key)
-    lock()
-# Encoder les données en ascii
-    data = data.encode('ascii')
-# Encrypter les données
-    encrypt_data = privkey.encrypt(data)
+    encryptor = PKCS1_OAEP.new(privkey)
+    encrypt_data = encryptor.encrypt(data)
     return encrypt_data
 
 
@@ -168,11 +164,14 @@ Cette fonction représentant la structure du certificat en clair, haché puis cr
 Elle réuni toutes les fonctions précédentes pour afficher les informations qui se trouvent sur notre certificat.
 """
 def gen_certificate():
+# Vérouiller les fichiers supplémentaires
     lock()
+# Récupérer la clé publique
+    pubkey = generate_keys()
 # numéro de série du certificat
     certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
     certif_serial_nb = hash_func(certif_serial_nb)
-    certif_serial_nb = encrypt(certif_serial_nb)
+    certif_serial_nb = encrypt_func(certif_serial_nb)
 # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
     gen_serial_nb = hash_func(gen_serial_nb)

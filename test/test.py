@@ -1,59 +1,57 @@
-#!/usr/bin/env python3
-import os, sys, hashlib
 from Crypto.PublicKey import RSA
-from datetime import datetime, timedelta
-from getmac import get_mac_address as gma
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA512, SHA384, SHA256, SHA, MD5
+from Crypto import Random
+from base64 import b64encode, b64decode
+import rsa
 
-def generate_keys():
-    global keys, pubkey, privkey
-# Dévérouiller l'accès aux fichiers
+hash = "SHA-256"
 
-# Générer une paire de clés RSA
-    keys = RSA.generate(2048) # Taille de la clé en bits
-# Exporter les clés
-    pubkey = keys.publickey().exportKey('PEM')
-    privkey = keys.exportKey('PEM')
-# Enregistrer les clés dans 2 fichiers
-    # pour la clé publique
-    with open('public.pem', 'w') as file_pubkey:
-        file_pubkey.write(pubkey.decode())
-        file_pubkey.close()
-    # pour la clé privée
-    with open('private.pem', 'w') as file_privkey:
-        file_privkey.write(privkey.decode())
-        file_privkey.close()
-# Vérouiller l'accès aux fichiers
+def newkeys(keysize):
+    random_generator = Random.new().read
+    key = RSA.generate(keysize, random_generator)
+    private, public = key, key.publickey()
+    return public, private
 
-    return pubkey
-"""
-Cette fonction hash les données du certificat et les retourne.
-Elle utilise la fonction de hachage SHA256.
-"""
-def hash_func(data):
-    global hash_message
-# Encodage avant hachage
-    data = data.encode('ascii')
-# Fonction de hachage
-    hash_message = hashlib.sha256(data)
-# Passage en hexadecimal
-    hash_message = hash_message.hexdigest()
-    return hash_message
-"""
-Cette fonction récupère la clé publique et encrypte les données du certificat.
-Elle retourne les données encryptées.
-"""
-def encrypt(data):
-    global encrypt_data, privkey
-# Récupérer la clé privée
-    with open('./private/private.pem', 'r') as file_privkey:
-        priv_key = file_privkey.read()
-        file_privkey.close()
-    privkey = RSA.import_key(priv_key)
-# Encoder les données en ascii
-    data = data.encode('ascii')
-# Encrypter les données
-    encrypt_data = privkey.encrypt(data)
-    return encrypt_data
+def importKey(externKey):
+    return RSA.importKey(externKey)
+
+
+
+def encrypt(message, pub_key):
+    #RSA encryption protocol according to PKCS#1 OAEP
+    cipher = PKCS1_OAEP.new(pub_key)
+    return cipher.encrypt(message)
+
+def decrypt(ciphertext, priv_key):
+    #RSA encryption protocol according to PKCS#1 OAEP
+    cipher = PKCS1_OAEP.new(priv_key)
+    return cipher.decrypt(ciphertext)
+
+def main():
+    msg1 = b"test"
+
+    keysize = 2048
+
+    (public, private) = rsa.newkeys(keysize)
+
+    # https://docs.python.org/3/library/base64.html
+    # encodes the bytes-like object s
+    # returns bytes
+    encrypted = b64encode(rsa.encrypt(msg1, private))
+    # decodes the Base64 encoded bytes-like object or ASCII string s
+    # returns the decoded bytes
+    decrypted = rsa.decrypt(b64decode(encrypted), private)
+
+
+    #print(private.exportKey('PEM'))
+    #print(public.exportKey('PEM'))
+    print("Encrypted: " + encrypted.decode('ascii'))
+    print("Decrypted: '%s'" % (decrypted))
+
+if __name__== "__main__":
+    main()
 
 
 
