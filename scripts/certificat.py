@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os, sys, hashlib, getpass, binascii
-
 from Crypto.Hash import SHA256
 from getmac import get_mac_address as gma
 from Crypto.PublicKey import RSA
@@ -8,17 +7,20 @@ from Crypto.Cipher import PKCS1_OAEP
 from datetime import datetime, timedelta
 
 
-######################################################################################################################################################
-######################################################################################################################################################
-############################################                 IDENTIFIANTS DU PC                 ######################################################
-######################################################################################################################################################
-######################################################################################################################################################
+########################################################################################################################
+########################################################################################################################
+##############################                 IDENTIFIANTS DU PC                 ######################################
+########################################################################################################################
+########################################################################################################################
+
+
 """
 Cette fonction retourne l'uuid de la carte mère.
 Elle exécute une commande en focntion de l'os utilisé (windows, linux, macos).
 """
+
+
 def get_motherboard_uuid():
-    global motherboard_uuid
     os_type = sys.platform.lower()
     if "win" in os_type:
         commande = "wmic csproduct get name,identifyingnumber,uuid"
@@ -30,19 +32,25 @@ def get_motherboard_uuid():
         print('Erreur: Je ne suis pas en mesure d\'identifier votre OS.')
     motherboard_uuid = "UUID:" + os.popen(commande).read().replace("\n","").replace("	","").replace(" ","")
     return motherboard_uuid
+
+
 """
 Cette fonction retourne l'adresse mac de la carte réseau utilisée.
 """
+
+
 def get_mac():
-    global mac_address
     mac_address = str("MAC:" + gma())
     return mac_address
+
+
 """
 Cette fonction retourne le numéro de série de l'ordinateur, se trouvant sur le bios.
 Elle exécute une commande en fonction de l'os utlisée (windows, linux, macos).
 """
+
+
 def get_serial_nb():
-    global serial_nb
     os_type = sys.platform.lower()
     if "win" in os_type:
         commande = "wmic bios get serialnumber"
@@ -56,20 +64,23 @@ def get_serial_nb():
     return serial_nb
 
 
-######################################################################################################################################################
-######################################################################################################################################################
-########################################                 SIGNATURE, HACHAGE, ENCRYPTION                 ##############################################
-######################################################################################################################################################
-######################################################################################################################################################
+########################################################################################################################
+########################################################################################################################
+#########################                 SIGNATURE, HACHAGE, ENCRYPTION                 ###############################
+########################################################################################################################
+########################################################################################################################
+
+
 """
 Cette fonction génère une paire de clés rsa.
 Elle les enregistre dans un fichier appelé 'mykey.pem'.
 Puis elle exporte la clé publique et la retourne.
 """
+
+
 def generate_keys():
-    global keys, pubkey, privkey
 # Dévérouiller l'accès aux fichiers
-    unlock()
+    unlock(passwd)
 # Générer une paire de clés RSA
     keys = RSA.generate(2048) # Taille de la clé en bits
     privkey, pubkey = keys, keys.publickey()
@@ -91,12 +102,15 @@ def generate_keys():
 # Vérouiller l'accès aux fichiers
     lock()
     return pubkey, privkey
+
+
 """
 Cette fonction hash les données du certificat et les retourne.
 Elle utilise la fonction de hachage SHA256.
 """
+
+
 def hash_func(data):
-    global hash_message
 # Encodage avant hachage
     data = data.encode('ascii')
 # Fonction de hachage
@@ -104,14 +118,18 @@ def hash_func(data):
 # Passage en hexadecimal
     hash_message = hash_message.hexdigest()
     return hash_message
+
+
 """
 Cette fonction récupère la clé publique et encrypte les données du certificat.
 Elle retourne les données encryptées.
 """
+
+
 def encrypt_func(data):
-    unlock()
-    with open('./private/private.pem', 'r') as priv_key_file:
-        privkey_list = priv_key_file.readlines()
+    unlock(passwd)
+    with open('./private/private.pem', 'r') as privkey_file:
+        privkey_list = privkey_file.readlines()
         key = "".join(privkey_list)
         privkey = RSA.import_key(key)
     encryptor = PKCS1_OAEP.new(privkey, SHA256)
@@ -120,16 +138,20 @@ def encrypt_func(data):
     return encrypt_data
 
 
-######################################################################################################################################################
-######################################################################################################################################################
-#################################################                 CONTENU CERTIFICAT              ####################################################
-######################################################################################################################################################
-######################################################################################################################################################
+########################################################################################################################
+########################################################################################################################
+###################################                 CONTENU CERTIFICAT              ####################################
+########################################################################################################################
+########################################################################################################################
+
+
 """
 Cette fonction détermine la durée du certificat.
 Elle prend la date de création du certificat.
 Elle demande à l'utilisateur de choisir sa durée en jours à sa génération.
 """
+
+
 # dates de début et de fin de validité
 def duration():
 # date de création du certificat et début de validité
@@ -141,14 +163,18 @@ def duration():
     date_fin = str(date_fin.day) + '-' + str(date_fin.month) + '-' + str(date_fin.year)
     duree = 'Du ' + date_debut + ' au ' + date_fin
     return(duree)
+
+
 """
 Cette fonction génère le numéro de série du certificat.
 Elle stocke tous les numéros de série dans l'ordre dans le fichier 'certif_serial_nb.txt'.
 Elle y récupère le dernier numéro utilisé pour y ajouter 1 et l'enregistrer à la fin du fichier.
 """
+
+
 def gen_certif_serial_nb():
 # Autoriser l'accès en mode écriture aux fichiers
-    unlock()
+    unlock(passwd)
 # Ouvrir le fichier en mode lecture
     serial_nb_file = open('./private/certif_serialnb.txt', 'r')
 # Récupérer la dernière ligne
@@ -166,20 +192,20 @@ def gen_certif_serial_nb():
 # Fermer l'accès aux fichier
     lock()
     return certif_serial_nb
+
+
 """
 Cette fonction représentant la structure du certificat en clair, haché puis chiffré.
 Elle réuni toutes les fonctions précédentes pour afficher les informations qui se trouvent sur notre certificat.
 """
+
+
 def gen_certificate():
 # Vérouiller les fichiers supplémentaires
     lock()
-# Récupérer la clé publique
-#     pubkey = generate_keys()
 # numéro de série du certificat
     certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
     certif_serial_nb = hash_func(certif_serial_nb)
-    certif_serial_nb = encrypt_func(certif_serial_nb)
-    print(certif_serial_nb)
 # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
     gen_serial_nb = hash_func(gen_serial_nb)
@@ -202,6 +228,7 @@ def gen_certificate():
 # clé publique du propriétaire du certificat
     pubkey = str(generate_keys())
     pubkey = hash_func(pubkey)
+    pubkey = encrypt_func(pubkey)
     hashtext = f"""
     {str(certif_serial_nb)}
     {str(gen_serial_nb)}
@@ -212,18 +239,52 @@ def gen_certificate():
     {str(mac)}
     {str(serial_nb)}
     """
+    hashtext = encrypt_func(hashtext)
     return hashtext
 
 
-######################################################################################################################################################
-######################################################################################################################################################
-#################################################              PROTÉGER LES FICHIERS              ####################################################
-######################################################################################################################################################
-######################################################################################################################################################
+########################################################################################################################
+########################################################################################################################
+##################################              PROTÉGER LES FICHIERS              #####################################
+########################################################################################################################
+########################################################################################################################
+
+
+"""
+Cette fonction demande à l'utilisateur de choisir un mot de passe et de le confirmer.
+Elle renvoit le mot de passe.
+"""
+
+
+def get_passwd():
+    mdp = getpass.getpass(prompt = 'Veuillez choisir un mot de passe svp (q pour quitter):\n')
+    if mdp == 'q':
+        sys.exit()
+    mdp_bis = getpass.getpass(prompt = 'Veuillez confimer le mot de passe svp (q pour quitter):\n')
+    if mdp_bis == 'q':
+        sys.exit()
+    while mdp != mdp_bis :
+        print('Veuillez réessayer.')
+        mdp = getpass.getpass(prompt = 'Veuillez choisir un mot de passe svp (q pour quitter):\n')
+        if mdp == 'q':
+            sys.exit()
+        mdp_bis = getpass.getpass(prompt = 'Veuillez confimer le mot de passe svp (q pour quitter):\n')
+        if mdp_bis == 'q':
+            sys.exit()
+    else:
+        print('Mot de passe enregistré !')
+    return mdp
+
+passwd = get_passwd()
+
+
 """
 Cette fonction permet de bloquer l'accès aux 2 fichiers protégés dont se sert le certificat.
 Ils ne sont pas lisibles, exécutables ou modifiables.
 """
+
+
+
 def lock():
     os_type = sys.platform.lower()
     if "win" in os_type:
@@ -242,17 +303,21 @@ def lock():
     lock_file_pubkey = os.popen(lock_file_pubkey).read().replace("\n","").replace("	","").replace(" ","")
     lock_file_privkey = os.popen(lock_file_privkey).read().replace("\n","").replace("	","").replace(" ","")
     return lock_file_sn, lock_file_pubkey, lock_file_privkey
+
+
 """
 Cette fonction permet d'authoriser l'accès aux 2 fichiers protégés dont se sert le certificat.
 Il est possible d'écrire
 """
-def unlock():
+
+
+def unlock(passwd):
     os_type = sys.platform.lower()
     mdp = getpass.getpass(prompt='Veuillez entrer le mot de passe svp (q pour quitter): ')
     if mdp == "q":
         sys.exit()
     else :
-        while mdp != "ok":
+        while mdp != passwd:
             mdp = getpass.getpass(prompt='Veuillez entrer le mot de passe svp (q pour quitter): ')
             if mdp == "q":
                 sys.exit()
@@ -275,11 +340,11 @@ def unlock():
     return unlock_file_pubkey, unlock_file_sn, unlock_file_privkey
 
 
-######################################################################################################################################################
-######################################################################################################################################################
-##################################################            CERTIFICAT HASHÉ ET CRYPTÉ            ##################################################
-######################################################################################################################################################
-######################################################################################################################################################
+########################################################################################################################
+########################################################################################################################
+###################################            CERTIFICAT HASHÉ ET CRYPTÉ            ###################################
+########################################################################################################################
+########################################################################################################################
 
 
 # signature avant chiffrement = + sécurisé !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -287,5 +352,5 @@ def unlock():
 # puis crypter avec la clé privée ENCOURS!
 # mettre en binaire et identifier la cle de hash et publique
 
-certificat = gen_certificate()
-print('Voici votre certificat :\n' + certificat)
+certificate = gen_certificate()
+print('Voici votre certificat :\n' + certificate)
