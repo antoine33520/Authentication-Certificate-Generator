@@ -223,7 +223,7 @@ def gen_certificate():
     # adresse mac carte réseau
     mac = get_mac() 
     mac = hash_func(mac)
-    mec = encrypt_func(mac)
+    mac = encrypt_func(mac)
     # numéro de série du pc
     serial_nb = get_serial_nb() 
     serial_nb = hash_func(serial_nb)
