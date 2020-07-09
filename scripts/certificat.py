@@ -89,11 +89,11 @@ def generate_keys():
     privkey = privkey.exportKey('PEM')
 # Enregistrer les clés dans 2 fichiers
     # pour la clé publique
-    with open('./private/public.pem', 'wb') as file_pubkey:
+    with open('../private/public.pem', 'wb') as file_pubkey:
         file_pubkey.write(pubkey)
         file_pubkey.close()
     # pour la clé privée
-    with open('./private/private.pem', 'wb') as file_privkey:
+    with open('../private/private.pem', 'wb') as file_privkey:
         file_privkey.write(privkey)
         file_privkey.close()
 # Décoder les clés
@@ -128,7 +128,7 @@ Elle retourne les données encryptées.
 
 def encrypt_func(data):
     unlock(passwd)
-    with open('./private/private.pem', 'r') as privkey_file:
+    with open('../private/private.pem', 'r') as privkey_file:
         privkey_list = privkey_file.readlines()
         key = "".join(privkey_list)
         privkey = RSA.import_key(key)
@@ -176,7 +176,7 @@ def gen_certif_serial_nb():
 # Autoriser l'accès en mode écriture aux fichiers
     unlock(passwd)
 # Ouvrir le fichier en mode lecture
-    serial_nb_file = open('./private/certif_serialnb.txt', 'r')
+    serial_nb_file = open('../private/certif_serialnb.txt', 'r')
 # Récupérer la dernière ligne
     last_line = len(serial_nb_file.readlines()) - 1
 # Fermer le fichier
@@ -184,7 +184,7 @@ def gen_certif_serial_nb():
 # Créer nouveau numéro de série
     certif_serial_nb = int(last_line) + 1
 # Ouvrir le fichier en mode ajout
-    serial_nb_file = open('./private/certif_serialnb.txt', 'a')
+    serial_nb_file = open('../private/certif_serialnb.txt', 'a')
 # Ajouter nouveau numéro de série au fichier
     serial_nb_file.write('\n' + str(certif_serial_nb))
 # Fermer le fichier
@@ -206,25 +206,32 @@ def gen_certificate():
 # numéro de série du certificat
     certif_serial_nb = 'CertificateSerialNumber:' + str(gen_certif_serial_nb())
     certif_serial_nb = hash_func(certif_serial_nb)
+    certif_serial_nb =encrypt_func(certif_serial_nb)
 # numéro de série du générateur en uint16 [0,65535] de 4 caractères
     gen_serial_nb = 'GeneratorSerialNumber:0001'
     gen_serial_nb = hash_func(gen_serial_nb)
+    gen_serial_nb = encrypt_func(get_serial_nb)
 # durée du certificat
     duree = duration()
     duree = hash_func(duree)
+    duree = encrypt_func(duree)
 # identifiants pc
     # uuid carte mère
     uuid = get_motherboard_uuid() 
     uuid = hash_func(uuid)
+    uuid = encrypt_func(uuid)
     # adresse mac carte réseau
     mac = get_mac() 
     mac = hash_func(mac)
+    mec = encrypt_func(mac)
     # numéro de série du pc
     serial_nb = get_serial_nb() 
     serial_nb = hash_func(serial_nb)
+    serial_nb = encrypt_func(serial_nb)
 # algorithme de chiffrement utilisé pour signer le certificat
     hachage = 'SHA256'
     hachage = hash_func(hachage)
+    hachage = encrypt_func(hachage)
 # clé publique du propriétaire du certificat
     pubkey = str(generate_keys())
     pubkey = hash_func(pubkey)
@@ -288,14 +295,14 @@ Ils ne sont pas lisibles, exécutables ou modifiables.
 def lock():
     os_type = sys.platform.lower()
     if "win" in os_type:
-        lock_file_sn = "cacls ./private/certif_serialnb.txt /e /p Everyone:n"
-        lock_file_pubkey = "cacls ./private/public.pem /e /p Everyone:n"
-        lock_file_privkey = "cacls ./private/private.pem /e /p Everyone:n"
+        lock_file_sn = "cacls ../private/certif_serialnb.txt /e /p Everyone:n"
+        lock_file_pubkey = "cacls ../private/public.pem /e /p Everyone:n"
+        lock_file_privkey = "cacls ../private/private.pem /e /p Everyone:n"
         print('Fichiers vérouillés.')
     elif "linux" or "darwin" in os_type:
-        lock_file_sn = "sudo chmod a-w+rx ./private/certif_serialnb.txt"
-        lock_file_pubkey = "sudo chmod a-rwx ./private/public.pem"
-        lock_file_privkey = "sudo chmod a-rwx ./private/private.pem"
+        lock_file_sn = "sudo chmod a-w+rx ../private/certif_serialnb.txt"
+        lock_file_pubkey = "sudo chmod a-rwx ../private/public.pem"
+        lock_file_privkey = "sudo chmod a-rwx ../private/private.pem"
         print('Fichiers vérouillés.')
     else :
         print('Erreur: Je ne suis pas en mesure d\'identifier votre OS.')
@@ -323,14 +330,14 @@ def unlock(passwd):
                 sys.exit()
         else:
             if "linux" or "darwin" in os_type:
-                unlock_file_sn = "sudo chmod a+w ./private/certif_serialnb.txt"
-                unlock_file_privkey = "sudo chmod a+rwx ./private/private.pem"
-                unlock_file_pubkey = "sudo chmod a+rwx ./private/public.pem"
+                unlock_file_sn = "sudo chmod a+w ../private/certif_serialnb.txt"
+                unlock_file_privkey = "sudo chmod a+rwx ../private/private.pem"
+                unlock_file_pubkey = "sudo chmod a+rwx ../private/public.pem"
                 print('Fichiers dévérouillés.')
             elif "win" in os_type:
-                unlock_file_sn = "cacls ./private/certif_serialnb.txt /e /p Everyone:f"
-                unlock_file_privkey = "cacls ./private/private.pem /e /p Everyone:f"
-                unlock_file_pubkey = "cacls ./private/public.pem /e /p Everyone:f"
+                unlock_file_sn = "cacls ../private/certif_serialnb.txt /e /p Everyone:f"
+                unlock_file_privkey = "cacls ../private/private.pem /e /p Everyone:f"
+                unlock_file_pubkey = "cacls ../private/public.pem /e /p Everyone:f"
                 print('Fichiers dévérouillés.')
             else :
                 print('Erreur: Je ne suis pas en mesure d\'identifier votre OS.')
